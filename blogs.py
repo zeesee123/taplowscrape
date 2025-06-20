@@ -93,26 +93,48 @@ def scrape_blog(blog_url, card_image_url):
 
     soup = BeautifulSoup(res.text, "html.parser")
 
-    title = soup.find("h1").text.strip() if soup.find("h1") else "No title"
-    date = soup.select_one(".date")
-    date = date.text.strip() if date else "No date"
+    # Title
+    title_tag = soup.find("h1")
+    title = title_tag.text.strip() if title_tag else "No title"
 
-    author = soup.select_one(".author")
-    author = author.text.strip() if author else "No author"
+    # Author
+    author_tag = soup.select_one("div.author")
+    author = author_tag.text.strip() if author_tag else "No author"
 
-    content_div = soup.select_one(".desc")
-    content = content_div.get_text(separator="\n").strip() if content_div else "No content"
+    # Date
+    date_tag = soup.select_one("div.date")
+    date = date_tag.text.strip() if date_tag else "No date"
 
-    featured_img_tag = content_div.find("img") if content_div else None
-    featured_image_url = featured_img_tag["src"] if featured_img_tag and "src" in featured_img_tag.attrs else None
+    # Article image section (score + views + featured image)
+    image_section = soup.select_one("div.article_image.left_image")
+
+    # Featured image
+    featured_image_tag = image_section.find("img") if image_section else None
+    featured_image_url = urljoin(blog_url, featured_image_tag["src"]) if featured_image_tag and "src" in featured_image_tag.attrs else None
     featured_image = download_image(featured_image_url) if featured_image_url else None
 
-    all_image_urls = [img["src"] for img in content_div.find_all("img") if "src" in img.attrs] if content_div else []
-    all_images = [download_image(img_url) for img_url in all_image_urls]
+    # Score or rating (number of stars or rating value)
+    score = None
+    if image_section:
+        score_tag = image_section.find(class_="rating")  # Adjust this class as per actual HTML
+        score = score_tag.text.strip() if score_tag else "No score"
 
-    view_span = soup.find("span", class_="readcount") or soup.find("div", class_="readcount")
-    views = view_span.text.strip() if view_span else "No view count"
+    # Views
+    views = None
+    if image_section:
+        view_tag = image_section.find(class_="readcount")
+        views = view_tag.text.strip() if view_tag else "No view count"
 
+    # Content
+    content_container = soup.select_one("div.article.details")
+    content = content_container.get_text(separator="\n").strip() if content_container else "No content"
+
+    # All images inside content
+    all_image_tags = content_container.find_all("img") if content_container else []
+    all_image_urls = [urljoin(blog_url, img["src"]) for img in all_image_tags if "src" in img.attrs]
+    all_images = [download_image(url) for url in all_image_urls]
+
+    # Card image (from listing page)
     card_image = download_image(card_image_url) if card_image_url else None
 
     return {
@@ -120,11 +142,12 @@ def scrape_blog(blog_url, card_image_url):
         "title": title,
         "author": author,
         "date": date,
+        "score": score,
+        "views": views,
         "content": content,
         "card_image": card_image,
         "featured_image": featured_image,
         "all_images": all_images,
-        "views": views
     }
 
 # Step 3: Run everything and save to JSON
