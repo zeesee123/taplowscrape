@@ -101,11 +101,17 @@ def scrape_blog(blog_url, card_image_url):
     meta_tag = soup.select_one("p.meta_text.no_margin")
     author = "No author"
     date = "No date"
+
     if meta_tag:
-        meta_text = meta_tag.get_text(separator="|")
-        parts = meta_text.split("|")
-        author = parts[0].replace("Author:", "").strip() if len(parts) > 0 else "No author"
-        date = parts[1].strip() if len(parts) > 1 else "No date"
+        author_tag = meta_tag.find("a")
+        if author_tag:
+            author = author_tag.text.strip()
+
+        separators = meta_tag.find_all("span", class_="separator")
+        if len(separators) >= 1:
+            date_node = separators[0].next_sibling
+            if date_node:
+                date = date_node.strip()
 
     # Score (rating)
     score_tag = soup.select_one(".rate_article .current_rating")
