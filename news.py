@@ -89,6 +89,18 @@ def scrape_news(news_url, card_image_url):
 
     soup = BeautifulSoup(res.text, "html.parser")
 
+    # Meta Title
+    meta_title_tag = soup.find("title")
+    meta_title = meta_title_tag.get_text(strip=True) if meta_title_tag else "No meta title"
+
+    # Meta Description
+    meta_desc_tag = soup.find("meta", attrs={"name": "description"})
+    meta_description = meta_desc_tag["content"].strip() if meta_desc_tag and "content" in meta_desc_tag.attrs else "No meta description"
+
+    # Canonical URL
+    canonical_tag = soup.find("link", rel="canonical")
+    canonical_url = canonical_tag["href"].strip() if canonical_tag and "href" in canonical_tag.attrs else "No canonical URL"
+
     # Title
     title_tag = soup.find("h1")
     title = title_tag.get_text(strip=True) if title_tag else "No title"
@@ -145,6 +157,9 @@ def scrape_news(news_url, card_image_url):
         "date": date,
         "score": score,
         "views": views,
+        "meta_title": meta_title,
+        "meta_description": meta_description,
+        "canonical_url": canonical_url,
         "content": content_html,
         "card_image": card_image,
         "featured_image": featured_image,
