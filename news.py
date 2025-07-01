@@ -94,7 +94,7 @@ def scrape_news(news_url, card_image_url):
     meta_title = meta_title_tag.get_text(strip=True) if meta_title_tag else "No meta title"
 
     # Meta Description
-    meta_desc_tag = soup.find("meta", attrs={"name": "description"})
+    meta_desc_tag = soup.find("meta", attrs={"name": "DESCRIPTION"})
     meta_description = meta_desc_tag["content"].strip() if meta_desc_tag and "content" in meta_desc_tag.attrs else "No meta description"
 
     # Canonical URL
